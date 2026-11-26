@@ -33,12 +33,29 @@ if (-not $pending) {
 }
 
 Write-Host "`n[3/3] 推送到 GitHub..." -ForegroundColor Cyan
-& $gitExe -C $siteRoot push
-if ($LASTEXITCODE -ne 0) {
-  Write-Host "`n推送失败。常见原因：" -ForegroundColor Red
-  Write-Host "  · 还没把公钥加到 GitHub（Settings → SSH and GPG keys）"
-  Write-Host "  · 仓库还没建，或仓库名不是 gevenchou.github.io"
-  Write-Host "  · 网络到 GitHub 不通"
+
+# 国内到 GitHub 的 SSH 有时会抽风，22 和 443 轮流试一遍
+$sshExe  = "C:/Windows/System32/OpenSSH/ssh.exe"
+$keyPath = (Join-Path $gitHome ".ssh\id_ed25519") -replace '\\', '/'
+$khPath  = (Join-Path $gitHome ".ssh\known_hosts") -replace '\\', '/'
+$sshBase = "$sshExe -i $keyPath -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=$khPath"
+
+function Try-Push([string]$label, [string]$sshCommand) {
+  Write-Host "  尝试 $label ..." -ForegroundColor DarkGray
+  if ($sshCommand) {
+    & $gitExe -C $siteRoot -c "core.sshCommand=$sshCommand" push 2>&1 | Out-Host
+  } else {
+    & $gitExe -C $siteRoot push 2>&1 | Out-Host
+  }
+  return ($LASTEXITCODE -eq 0)
+}
+
+$pushed = (Try-Push "默认端口 22" $null) -or
+          (Try-Push "备用端口 443" "$sshBase -p 443 -o HostName=ssh.github.com")
+
+if (-not $pushed) {
+  Write-Host "`n推送失败。可能是：①网络到 GitHub 不通（等一下再试）②公钥没加到 GitHub ③仓库名不对。" -ForegroundColor Red
+  Write-Host "改动已经提交在本地，网络恢复后再跑一次这个脚本就行。" -ForegroundColor Yellow
   exit 1
 }
 
