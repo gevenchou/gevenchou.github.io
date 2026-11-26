@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light">
+<title>管理 · {{siteTitle}}</title>
+<link rel="stylesheet" href="{{base}}assets/style.css">
+<link rel="stylesheet" href="{{base}}assets/admin.css">
+<link rel="icon" href="{{base}}assets/favicon.svg" type="image/svg+xml">
+<script>window.ADMIN_CONFIG = {{adminConfig}};</script>
+</head>
+<body class="admin-body">
+
+<!-- ==================== 登录 ==================== -->
+<section id="login-view" class="login-wrap">
+  <form id="login-form" class="login-card" autocomplete="on">
+    <p class="login-seal" aria-hidden="true">覆雪</p>
+    <h1 class="login-title">管理后台</h1>
+    <p class="login-sub">{{siteTitle}} · 仅限站长本人</p>
+
+    <label class="field">
+      <span class="field-label">账号</span>
+      <input id="login-account" name="username" type="text" autocomplete="username" spellcheck="false" value="">
+    </label>
+
+    <label class="field">
+      <span class="field-label">访问令牌</span>
+      <input id="login-token" name="password" type="password" autocomplete="current-password"
+             placeholder="github_pat_… 或 ghp_…" spellcheck="false">
+    </label>
+
+    <button id="login-submit" class="btn btn-primary" type="submit">登 录</button>
+    <p id="login-error" class="login-error" hidden></p>
+
+    <details class="login-help">
+      <summary>访问令牌是什么？怎么拿？</summary>
+      <div class="help-body">
+        <p>这个站是纯静态页面，没有自己的服务器，所以密码不能存在网站里——那样谁都能翻源码看到。
+           真正管用的办法是让 GitHub 来验证身份：填一个只对这个仓库有写入权限的令牌，就相当于一把钥匙。</p>
+        <p><strong>推荐用细粒度令牌（Fine-grained）：</strong></p>
+        <ol>
+          <li>打开 <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">Generate new token</a></li>
+          <li>Token name 随便写，比如 <code>{{siteTitle}}-管理</code></li>
+          <li>Expiration 按需选择（90 天比较合适）</li>
+          <li>Repository access → <strong>Only select repositories</strong> → 勾选 <code id="help-repo">仓库</code></li>
+          <li>Permissions → Repository permissions → <strong>Contents</strong> 设为 <strong>Read and write</strong></li>
+          <li>点 Generate token，把生成的 <code>github_pat_…</code> 复制过来</li>
+        </ol>
+        <p class="help-note">令牌只会保存在你自己的浏览器里（localStorage），不会上传到别处。
+           它会随「退出登录」一起清除。公共电脑上用完记得退出并撤销令牌。</p>
+      </div>
+    </details>
+  </form>
+</section>
+
+<!-- ==================== 后台 ==================== -->
+<section id="panel-view" hidden>
+  <header class="admin-bar">
+    <a class="admin-brand" href="{{base}}">{{siteTitle}}</a>
+    <nav class="admin-tabs" id="tabs">
+      <button type="button" data-tab="posts" class="is-active">文章</button>
+      <button type="button" data-tab="works">作品</button>
+    </nav>
+    <div class="admin-right">
+      <span id="who" class="admin-who"></span>
+      <a class="admin-open" href="{{base}}" target="_blank" rel="noreferrer">看站点 ↗</a>
+      <button type="button" id="logout" class="btn btn-ghost">退出</button>
+    </div>
+  </header>
+
+  <main class="admin-main">
+    <!-- 列表 -->
+    <section id="list-pane">
+      <div class="pane-head">
+        <h2 id="list-title">文章</h2>
+        <div class="pane-actions">
+          <span id="list-count" class="muted"></span>
+          <button type="button" id="new-post" class="btn btn-primary">＋ 写一篇</button>
+        </div>
+      </div>
+      <p id="list-hint" class="muted list-hint"></p>
+      <ul id="list-body" class="doc-list"></ul>
+      <p id="list-empty" class="muted" hidden>这里还没有内容。</p>
+    </section>
+
+    <!-- 编辑器 -->
+    <section id="edit-pane" hidden>
+      <div class="pane-head">
+        <h2 id="edit-title">写一篇</h2>
+        <div class="pane-actions">
+          <button type="button" id="cancel" class="btn btn-ghost">← 返回列表</button>
+        </div>
+      </div>
+
+      <form id="edit-form" class="edit-form" autocomplete="off">
+        <div class="field-row">
+          <label class="field field-grow">
+            <span class="field-label">标题</span>
+            <input id="f-title" type="text" spellcheck="false" placeholder="今天想写点什么">
+          </label>
+          <label class="field">
+            <span class="field-label">日期</span>
+            <input id="f-date" type="date">
+          </label>
+        </div>
+
+        <div class="field-row">
+          <label class="field field-grow">
+            <span class="field-label">文件名（决定网址）</span>
+            <input id="f-slug" type="text" spellcheck="false" placeholder="只用字母、数字、连字符">
+          </label>
+          <label class="field">
+            <span class="field-label">标签</span>
+            <input id="f-tags" type="text" spellcheck="false" placeholder="随笔, 夜">
+          </label>
+        </div>
+        <p id="url-preview" class="url-preview muted"></p>
+
+        <label class="field">
+          <span class="field-label">摘要（列表和搜索结果里显示）</span>
+          <input id="f-summary" type="text" spellcheck="false" placeholder="留空则自动截取正文开头">
+        </label>
+
+        <div class="field-row work-only" hidden>
+          <label class="field">
+            <span class="field-label">状态</span>
+            <input id="f-status" type="text" spellcheck="false" placeholder="进行中 / 已完成 / 筹备中">
+          </label>
+          <label class="field field-grow">
+            <span class="field-label">外部链接（可选）</span>
+            <input id="f-link" type="url" spellcheck="false" placeholder="https://…">
+          </label>
+        </div>
+
+        <label class="field work-only" hidden>
+          <span class="field-label">封面图路径（可选）</span>
+          <input id="f-cover" type="text" spellcheck="false" placeholder="assets/cover.jpg">
+        </label>
+
+        <label class="check">
+          <input id="f-draft" type="checkbox">
+          <span>存为草稿（不会出现在网站上）</span>
+        </label>
+
+        <div class="editor-grid">
+          <div class="editor-col">
+            <div class="editor-head">
+              <span class="field-label">正文（Markdown）</span>
+              <span class="muted" id="body-stat"></span>
+            </div>
+            <textarea id="f-body" spellcheck="false" placeholder="正文从这里开始。空一行就是新段落。
+
+## 小标题
+**加粗**、*强调*、> 引用、- 列表
+![图说明](assets/图片.jpg)"></textarea>
+          </div>
+          <div class="editor-col">
+            <div class="editor-head">
+              <span class="field-label">预览</span>
+              <span class="muted">与线上排版一致</span>
+            </div>
+            <div id="preview" class="preview prose"></div>
+          </div>
+        </div>
+
+        <div class="edit-actions">
+          <button type="submit" id="save" class="btn btn-primary">保存并发布</button>
+          <button type="button" id="delete" class="btn btn-danger" hidden>删除这篇</button>
+          <span id="edit-status" class="muted"></span>
+        </div>
+      </form>
+    </section>
+  </main>
+</section>
+
+<div id="toast" class="toast" hidden></div>
+
+<script type="module" src="{{base}}assets/admin.js"></script>
+</body>
+</html>

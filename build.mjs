@@ -33,13 +33,14 @@ function writeFile(relPath, content) {
   fs.writeFileSync(target, content, "utf8");
 }
 
-function copyDir(from, to) {
+function copyDir(from, to, filter = null) {
   if (!fs.existsSync(from)) return;
   fs.mkdirSync(to, { recursive: true });
   for (const entry of fs.readdirSync(from, { withFileTypes: true })) {
+    if (filter && !filter(entry.name)) continue;
     const src = path.join(from, entry.name);
     const dst = path.join(to, entry.name);
-    if (entry.isDirectory()) copyDir(src, dst);
+    if (entry.isDirectory()) copyDir(src, dst, filter);
     else fs.copyFileSync(src, dst);
   }
 }
@@ -50,8 +51,7 @@ function resolveAssetUrls(html, base) {
   return html.replace(/(src|href)="assets\//g, `$1="${base}assets/`);
 }
 
-function prosePage(site, base, { title, description, active, markdownHtml, subtitle }) {
-  const main = `${T.pageHead(title, subtitle)}<div class="prose prose-page">\n${markdownHtml}\n</div>`;
+function prosePage(site, base, { title, description, active, markdownHtml, subtitle }) {  const main = `${T.pageHead(title, subtitle)}<div class="prose prose-page">\n${markdownHtml}\n</div>`;
   return T.layout(site, base, {
     title,
     description,
@@ -59,6 +59,28 @@ function prosePage(site, base, { title, description, active, markdownHtml, subti
     main,
     canonical: T.absoluteUrl(site, base, `${active}/`),
   });
+}
+
+/** 生成管理后台页面：把 theme/admin.html 里的占位符换成真实配置 */
+function writeAdminPage(site, base) {
+  const tplPath = path.join(ROOT, "theme", "admin.html");
+  if (!fs.existsSync(tplPath)) {
+    warn("theme/admin.html 不存在，跳过管理页");
+    return;
+  }
+  const tpl = fs.readFileSync(tplPath, "utf8");
+  const adminConfig = {
+    owner: site.admin.owner,
+    repo: site.admin.repo,
+    branch: site.admin.branch || "main",
+    siteTitle: site.siteTitle,
+    base,
+  };
+  const html = tpl
+    .replaceAll("{{base}}", base)
+    .replaceAll("{{siteTitle}}", site.siteTitle)
+    .replaceAll("{{adminConfig}}", JSON.stringify(adminConfig));
+  writeFile("admin/index.html", html);
 }
 
 function main() {
@@ -187,6 +209,9 @@ function main() {
     warn("content/about.md 不存在，跳过「关于」页");
   }
 
+  // ---- 管理后台 ----
+  if (site.admin?.enabled) writeAdminPage(site, base);
+
   // ---- 404 ----
   writeFile(
     "404.html",
@@ -201,13 +226,19 @@ function main() {
 
   // ---- RSS / 静态文件 ----
   writeFile("rss.xml", T.rssXml(site, base, posts));
-  writeFile("robots.txt", `User-agent: *\nAllow: /\n${site.url ? `Sitemap: ${site.url}/rss.xml\n` : ""}`);
+  writeFile(
+    "robots.txt",
+    `User-agent: *\nDisallow: /admin/\nAllow: /\n${site.url ? `Sitemap: ${site.url}/rss.xml\n` : ""}`,
+  );
   writeFile(".nojekyll", "");
 
   // ---- 资源 ----
   const assetOut = path.join(DIST, "assets");
   copyDir(path.join(ROOT, "assets"), assetOut);
-  copyDir(path.join(ROOT, "theme"), assetOut);
+  // theme 里的 .html 是模板，不该出现在产物里
+  copyDir(path.join(ROOT, "theme"), assetOut, (name) => !name.toLowerCase().endsWith(".html"));
+  // 把构建期的 Markdown 渲染器复制一份给浏览器，让后台的实时预览和线上效果完全一致
+  fs.copyFileSync(path.join(ROOT, "lib", "markdown.mjs"), path.join(assetOut, "markdown.mjs"));
   if (fs.existsSync(path.join(ROOT, "public"))) copyDir(path.join(ROOT, "public"), DIST);
   if (fs.existsSync(path.join(ROOT, "CNAME"))) fs.copyFileSync(path.join(ROOT, "CNAME"), path.join(DIST, "CNAME"));
 

@@ -15,5 +15,12 @@
   "links": [
     { "label": "GitHub", "url": "https://github.com/gevenchou" }
   ],
+  "admin": {
+    "enabled": true,
+    "owner": "gevenchou",
+    "repo": "gevenchou.github.io",
+    "branch": "main",
+    "label": "管理"
+  },
   "footerNote": "由你与我共同维护，慢慢写，慢慢长。"
 }

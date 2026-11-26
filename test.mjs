@@ -5,6 +5,7 @@
 import assert from "node:assert/strict";
 import { renderMarkdown, toPlainText, escapeHtml } from "./lib/markdown.mjs";
 import { parseFrontMatter, estimateReading } from "./lib/content.mjs";
+import * as admin from "./theme/admin-core.mjs";
 
 let passed = 0;
 let failed = 0;
@@ -124,6 +125,68 @@ check("没有 front matter 时整篇当正文", () => {
 check("阅读时长至少 1 分钟", () => {
   assert.equal(estimateReading("短"), 1);
   assert.ok(estimateReading("字".repeat(2000)) >= 4);
+});
+
+console.log("\n管理后台核心逻辑");
+
+check("base64 中文与换行往返", () => {
+  const text = "覆雪手记\n第二行 · 标点：「」（）\n\n---\n";
+  assert.equal(admin.base64ToUtf8(admin.utf8ToBase64(text)), text);
+});
+
+check("serializeDoc 写出的东西，构建侧能原样读出来", () => {
+  const meta = { title: "第一场雪", date: "2026-12-01", tags: ["随笔", "冬天"], summary: "一句摘要", draft: true };
+  const text = admin.serializeDoc(meta, "正文第一段\n\n第二段");
+  const { data, body } = parseFrontMatter(text);
+  assert.equal(data.title, "第一场雪");
+  assert.equal(data.date, "2026-12-01");
+  assert.deepEqual(data.tags, ["随笔", "冬天"]);
+  assert.equal(data.summary, "一句摘要");
+  assert.equal(String(data.draft), "true");
+  assert.equal(body, "正文第一段\n\n第二段");
+});
+
+check("标题里带冒号、逗号也不会被切坏", () => {
+  const text = admin.serializeDoc({ title: "时间: 现在，以及以后", date: "2026-12-01" }, "正文");
+  const { data } = parseFrontMatter(text);
+  assert.equal(data.title, "时间: 现在，以及以后");
+});
+
+check("标题以引号开头时会加引号保护", () => {
+  const text = admin.serializeDoc({ title: "「引号」开头的标题", date: "2026-12-01" }, "正文");
+  const { data } = parseFrontMatter(text);
+  assert.equal(data.title, "「引号」开头的标题");
+});
+
+check("空字段不会被写成垃圾内容", () => {
+  const text = admin.serializeDoc({ title: "只有标题", date: "2026-12-01", summary: "", tags: [], draft: false }, "正文");
+  assert.ok(!text.includes("summary"));
+  assert.ok(!text.includes("tags"));
+  assert.ok(!text.includes("draft"));
+});
+
+check("没有 front matter 时只输出正文", () => {
+  assert.equal(admin.serializeDoc({}, "就一段话"), "就一段话\n");
+});
+
+check("slugify 只留字母数字连字符", () => {
+  assert.equal(admin.slugify("Hello World! 你好"), "hello-world");
+  assert.equal(admin.slugify("纯中文标题"), "");
+});
+
+check("文件名带日期前缀，且有兜底", () => {
+  assert.equal(admin.buildFilename("2026-12-01", "first-snow"), "2026-12-01-first-snow.md");
+  assert.equal(admin.buildFilename("2026-12-01", "纯中文"), "2026-12-01-post-1201.md");
+});
+
+check("后台解析与构建解析对普通文章一致", () => {
+  const raw = "---\ntitle: 旧书的气味\ndate: 2026-11-02\ntags: 读书, 旧物\nsummary: 纸是会老的。\n---\n\n正文开始。";
+  const a = admin.parseDoc(raw);
+  const b = parseFrontMatter(raw);
+  assert.equal(a.meta.title, b.data.title);
+  assert.equal(a.meta.date, b.data.date);
+  assert.deepEqual(a.meta.tags, b.data.tags);
+  assert.equal(a.body, b.body);
 });
 
 console.log("");

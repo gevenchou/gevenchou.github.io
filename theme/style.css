@@ -27,6 +27,13 @@
   box-sizing: border-box;
 }
 
+/* 关键：我们大量用 hidden 属性来切换显示，
+   而 .login-wrap{display:flex} 这类规则会盖掉浏览器默认的 [hidden]{display:none}。
+   这条必须存在，否则登录框在登录后仍会盖在页面上。 */
+[hidden] {
+  display: none !important;
+}
+
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
@@ -130,6 +137,29 @@ img {
 .site-nav {
   display: flex;
   gap: 26px;
+}
+
+.head-right {
+  display: flex;
+  align-items: baseline;
+  gap: 22px;
+}
+
+.admin-link {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: var(--ink-3);
+  padding: 3px 9px;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  opacity: 0.8;
+  transition: color 0.3s ease, border-color 0.3s ease, opacity 0.3s ease;
+}
+
+.admin-link:hover {
+  color: var(--seal);
+  border-color: rgba(168, 64, 47, 0.45);
+  opacity: 1;
 }
 
 .site-nav a {
