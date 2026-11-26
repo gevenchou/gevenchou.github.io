@@ -1,0 +1,13 @@
+# 构建产物：由 GitHub Actions 在云端生成，不进仓库
+dist/
+
+# 本机的便携版 git 和临时文件
+.tools/
+.shots/
+node_modules/
+
+# 系统垃圾
+Thumbs.db
+.DS_Store
+desktop.ini
+*.log
