@@ -1,5 +1,7 @@
 # 覆雪手记
 
+**线上地址：<https://gevenchou.github.io>**
+
 一个不需要租服务器、不需要数据库、几乎不需要维护的个人网站。
 纯静态页面，文章写在 Markdown 文件里，托管在 GitHub Pages 上，**完全免费**。
 
@@ -122,14 +124,28 @@ summary: 一句摘要，会显示在列表和搜索结果里。
 
 1. 一个 GitHub 账号
 2. 一个仓库，建议就叫 `你的用户名.github.io`，这样网址是 `https://你的用户名.github.io`
-3. 本机有 git（没有的话，这个项目里自带便携版：`.tools/git/cmd/git.exe`）
+3. 本机有 git（这个项目里自带便携版：`.tools/git/cmd/git.exe`，不需要另外安装）
+4. 仓库 Settings → Pages → **Source 必须选 `GitHub Actions`**
 
-之后的日常发布：
+> ⚠️ 第 4 条是关键。如果 Source 是 `Deploy from a branch`，GitHub 会把仓库里的 README
+> 当成网页渲染，你看到的就不是这个站了。设置页：<https://github.com/gevenchou/gevenchou.github.io/settings/pages>
+
+**日常发布，最省事的办法**是用项目里的脚本（在项目目录下运行）：
 
 ```powershell
-git add -A
-git commit -m "新文章：第一场雪"
-git push
+.\publish.ps1                      # 自动生成提交说明
+.\publish.ps1 "新文章：第一场雪"     # 自己写提交说明
+```
+
+它会把「构建 → 提交 → 推送」三步一起做完。
+
+也可以手动执行：
+
+```powershell
+node build.mjs
+.tools\git\cmd\git.exe add -A
+.tools\git\cmd\git.exe commit -m "新文章：第一场雪"
+.tools\git\cmd\git.exe push
 ```
 
 推上去以后，GitHub 会自动跑构建（大约一分钟），刷新网页就能看到。

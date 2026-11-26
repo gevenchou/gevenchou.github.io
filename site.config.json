@@ -5,7 +5,7 @@
   "bio": "夜里写字的人。这里存放读书、行走，和一些没说完的话。",
   "seal": "覆雪",
   "avatar": "assets/avatar.png",
-  "url": "",
+  "url": "https://gevenchou.github.io",
   "basePath": "/",
   "nav": [
     { "key": "posts", "label": "文章", "href": "posts/" },
@@ -13,7 +13,7 @@
     { "key": "about", "label": "关于", "href": "about/" }
   ],
   "links": [
-    { "label": "GitHub", "url": "https://github.com/" }
+    { "label": "GitHub", "url": "https://github.com/gevenchou" }
   ],
   "footerNote": "由你与我共同维护，慢慢写，慢慢长。"
 }
