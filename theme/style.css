@@ -189,36 +189,44 @@ img {
 /* ---------------- 首页 ---------------- */
 
 .hero {
-  padding: 74px 0 54px;
-  max-width: 40em;
+  display: flex;
+  align-items: flex-start;
+  gap: 30px;
+  padding: 50px 0 34px;
+  border-bottom: 1px solid var(--rule-soft);
 }
 
 .avatar {
+  flex: 0 0 auto;
   display: block;
-  width: 88px;
-  height: 88px;
+  width: 84px;
+  height: 84px;
   border-radius: 50%;
   object-fit: cover;
-  margin-bottom: 30px;
+  margin: 4px 0 0;
   box-shadow: 0 0 0 1px rgba(93, 78, 55, 0.14), 0 18px 34px -26px rgba(60, 45, 25, 0.75);
   filter: saturate(0.9);
 }
 
+.hero-body {
+  min-width: 0;
+}
+
 .hero-name {
   font-family: var(--kai);
-  font-size: 40px;
+  font-size: 33px;
   font-weight: 400;
   line-height: 1.3;
   letter-spacing: 0.1em;
-  margin: 0 0 16px;
+  margin: 0 0 10px;
 }
 
 .hero-tagline {
   font-family: var(--kai);
-  font-size: 19px;
+  font-size: 17px;
   letter-spacing: 0.14em;
   color: var(--ink-2);
-  margin: 0 0 20px;
+  margin: 0 0 12px;
 }
 
 .hero-bio {
@@ -230,7 +238,7 @@ img {
 }
 
 .hero-links {
-  margin: 24px 0 0;
+  margin: 16px 0 0;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -251,6 +259,164 @@ img {
 
 .hero-links .dot {
   color: var(--rule);
+}
+
+/* ---------------- 首页三栏（错落） ---------------- */
+
+/* 首页比内页宽，才装得下三栏 */
+.page-home .wrap {
+  max-width: 1080px;
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: 1.12fr 1fr 0.96fr;
+  gap: 44px;
+  margin-top: 40px;
+  align-items: start;
+}
+
+.home-col {
+  min-width: 0;
+}
+
+.col-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 11px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.col-title {
+  font-family: var(--kai);
+  font-size: 19px;
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  margin: 0;
+}
+
+.col-more {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--ink-3);
+  white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.col-more:hover {
+  color: var(--seal);
+}
+
+.mini-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mini-item {
+  border-bottom: 1px dashed var(--rule);
+}
+
+.mini-item:last-child {
+  border-bottom: 0;
+}
+
+.mini-link {
+  display: block;
+  padding: 16px 0;
+  transition: padding-left 0.32s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.mini-link:hover {
+  padding-left: 6px;
+}
+
+.mini-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--kai);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  margin-bottom: 6px;
+}
+
+.mini-dur {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 0 5px;
+}
+
+.mini-title {
+  display: block;
+  font-family: var(--kai);
+  font-size: 18px;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  transition: color 0.3s ease;
+}
+
+.mini-link:hover .mini-title {
+  color: var(--seal);
+}
+
+.mini-sub {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--ink-3);
+  margin-top: 6px;
+}
+
+.mini-badge {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--seal);
+  border: 1px solid rgba(168, 64, 47, 0.35);
+  border-radius: 2px;
+  padding: 0 6px;
+  margin-bottom: 8px;
+}
+
+.mini-player {
+  display: block;
+  width: 100%;
+  height: 34px;
+  margin: 0 0 14px;
+}
+
+.mini-empty {
+  padding: 18px 0;
+  font-size: 13px;
+}
+
+.home-quiet {
+  margin-top: 68px;
+}
+
+/* 错落：三栏各差一个台阶，避免成为三根齐头柱子 */
+@media (min-width: 981px) {
+  .home-col-posts {
+    margin-top: 0;
+  }
+
+  .home-col-works {
+    margin-top: 56px;
+  }
+
+  .home-col-radio {
+    margin-top: 108px;
+  }
 }
 
 /* ---------------- 区块标题 ---------------- */
@@ -1072,21 +1238,22 @@ img {
   }
 
   .hero {
-    padding: 48px 0 40px;
+    gap: 18px;
+    padding: 38px 0 28px;
   }
 
   .avatar {
-    width: 72px;
-    height: 72px;
-    margin-bottom: 24px;
+    width: 60px;
+    height: 60px;
+    margin: 2px 0 0;
   }
 
   .hero-name {
-    font-size: 30px;
+    font-size: 25px;
   }
 
   .hero-tagline {
-    font-size: 16.5px;
+    font-size: 15.5px;
   }
 
   .row-link {
@@ -1157,6 +1324,40 @@ img {
 
   .notfound {
     padding: 70px 0 60px;
+  }
+}
+
+/* 首页三栏的响应式：宽屏三栏错落，中屏两栏，窄屏单栏 */
+@media (max-width: 980px) {
+  .home-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 34px;
+    margin-top: 32px;
+  }
+
+  .home-col-radio {
+    grid-column: 1 / -1;
+  }
+
+  .home-col-radio .mini-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 34px;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  .home-col-radio {
+    grid-column: auto;
+  }
+
+  .home-col-radio .mini-list {
+    display: block;
   }
 }
 

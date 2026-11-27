@@ -154,6 +154,7 @@ async function main() {
       description: site.bio,
       active: "home",
       main: T.homeMain(site, base, posts, works, radio),
+      pageClass: "page-home",
       canonical: T.absoluteUrl(site, base, ""),
     }),
   );
