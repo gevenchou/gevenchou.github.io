@@ -8,10 +8,26 @@
   "url": "https://gevenchou.github.io",
   "basePath": "/",
   "nav": [
-    { "key": "posts", "label": "文章", "href": "posts/" },
-    { "key": "works", "label": "作品", "href": "works/" },
-    { "key": "radio", "label": "电台", "href": "radio/" },
-    { "key": "about", "label": "关于", "href": "about/" }
+    {
+      "key": "posts",
+      "label": "文章",
+      "href": "posts/"
+    },
+    {
+      "key": "works",
+      "label": "作品",
+      "href": "works/"
+    },
+    {
+      "key": "radio",
+      "label": "电台",
+      "href": "radio/"
+    },
+    {
+      "key": "about",
+      "label": "关于",
+      "href": "about/"
+    }
   ],
   "links": [],
   "podcast": {
@@ -27,5 +43,9 @@
     "repo": "gevenchou.github.io",
     "branch": "main",
     "label": "管理"
+  },
+  "background": {
+    "image": "assets/background.jpg",
+    "strength": 0.7
   }
 }
