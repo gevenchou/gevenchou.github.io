@@ -231,6 +231,12 @@ check("纯中文 slug 会兜底成随机名，不会生成畸形路径", () => {
   assert.match(path, /^assets\/audio\/2026-11-27-media-[a-z0-9]+\.wav$/);
 });
 
+check("从文件名反推 slug（与构建规则一致）", () => {
+  assert.equal(admin.slugFromFilename("2026-11-26-kaizhan.md"), "kaizhan");
+  assert.equal(admin.slugFromFilename("2026-08-01-diantai.md"), "diantai");
+  assert.equal(admin.slugFromFilename("about.md"), "about");
+});
+
 console.log("");
 if (failed) {
   console.error(`✗ ${failed} 项失败，${passed} 项通过\n`);

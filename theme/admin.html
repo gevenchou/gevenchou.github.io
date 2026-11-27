@@ -63,6 +63,7 @@
       <button type="button" data-tab="posts" class="is-active">文章</button>
       <button type="button" data-tab="works">作品</button>
       <button type="button" data-tab="radio">电台</button>
+      <button type="button" data-tab="comments">留言</button>
       <button type="button" data-tab="profile">资料</button>
     </nav>
     <div class="admin-right">
@@ -194,6 +195,73 @@
           <span id="edit-status" class="muted"></span>
         </div>
       </form>
+    </section>
+
+    <!-- 留言审核 -->
+    <section id="comments-pane" hidden>
+      <div class="pane-head">
+        <h2>留言审核</h2>
+        <div class="pane-actions">
+          <span class="muted">保存后约 1 分钟生效</span>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <label class="field field-narrow">
+          <span class="field-label">栏目</span>
+          <select id="c-section">
+            <option value="posts">文章</option>
+            <option value="works">作品</option>
+            <option value="radio">电台</option>
+          </select>
+        </label>
+        <label class="field field-grow">
+          <span class="field-label">页面</span>
+          <select id="c-page">
+            <option value="">读取中…</option>
+          </select>
+        </label>
+      </div>
+
+      <p id="c-hint" class="muted list-hint"></p>
+      <ul id="c-list" class="doc-list"></ul>
+      <p id="c-empty" class="muted" hidden>这个页面还没有留言。</p>
+
+      <div class="pane-divider"></div>
+
+      <div class="pane-head pane-head-plain">
+        <h2>添加一条留言</h2>
+        <div class="pane-actions">
+          <span class="muted">从邮箱里复制过来，填写后点「添加」再「保存」</span>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <label class="field field-grow">
+          <span class="field-label">名字（访客怎么称呼自己）</span>
+          <input id="c-name" type="text" maxlength="24" placeholder="路过的猫">
+        </label>
+        <label class="field field-narrow">
+          <span class="field-label">日期</span>
+          <input id="c-date" type="date">
+        </label>
+      </div>
+
+      <label class="field">
+        <span class="field-label">留言内容</span>
+        <textarea id="c-text" rows="3" maxlength="500" placeholder="把访客写的那段贴进来"></textarea>
+      </label>
+
+      <label class="field">
+        <span class="field-label">你的回复（可选，会显示成「覆雪回」）</span>
+        <input id="c-reply" type="text" maxlength="300" placeholder="留空就不显示">
+      </label>
+
+      <div class="edit-actions">
+        <button type="button" id="c-add" class="btn">＋ 添加这条</button>
+        <button type="button" id="c-save" class="btn btn-primary">保存并发布</button>
+        <span id="c-status" class="muted"></span>
+      </div>
     </section>
 
     <!-- 个人资料 -->

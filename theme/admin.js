@@ -10,6 +10,7 @@ import {
   formatBytes,
   parseDoc,
   serializeDoc,
+  slugFromFilename,
   slugify,
   todayString,
 } from "./admin-core.mjs";
@@ -58,6 +59,7 @@ const state = {
   saving: false,
   profile: { sha: "", data: null, loaded: false },
   about: { sha: "", path: "content/about.md", meta: {}, body: "", loaded: false },
+  comments: { inited: false, path: "", sha: "", section: "", slug: "", list: [] },
   uploading: false,
 };
 
@@ -150,11 +152,14 @@ function switchTab(tab) {
   });
 
   const isProfile = tab === "profile";
-  $("list-pane").hidden = isProfile;
+  const isComments = tab === "comments";
+  $("list-pane").hidden = isProfile || isComments;
   $("edit-pane").hidden = true;
   $("profile-pane").hidden = !isProfile;
+  $("comments-pane").hidden = !isComments;
 
   if (isProfile) loadProfile();
+  else if (isComments) initCommentsTab();
   else loadList();
 }
 
@@ -785,6 +790,179 @@ function clearBackground() {
   $("profile-status").textContent = "背景图已移除，点「保存资料」生效";
 }
 
+// ---------------- 留言审核 ----------------
+
+const COMMENT_SECTIONS = {
+  posts: { dir: "content/posts", label: "文章" },
+  works: { dir: "content/works", label: "作品" },
+  radio: { dir: "content/radio", label: "电台" },
+};
+
+const commentPath = (section, slug) => `content/comments/${section}/${slug}.json`;
+
+async function initCommentsTab() {
+  if (!$("c-date").value) $("c-date").value = todayString();
+  if (state.comments.inited) return;
+  state.comments.inited = true;
+  await loadCommentPages();
+}
+
+async function loadCommentPages() {
+  const section = $("c-section").value;
+  const meta = COMMENT_SECTIONS[section];
+  const select = $("c-page");
+  select.innerHTML = `<option value="">读取中…</option>`;
+  $("c-list").innerHTML = "";
+  $("c-empty").hidden = true;
+  $("c-hint").textContent = "";
+
+  try {
+    const entries = await state.client.listDir(meta.dir);
+    const items = [];
+    for (const entry of entries) {
+      if (entry.type !== "file" || !entry.name.endsWith(".md")) continue;
+      let title = entry.name;
+      try {
+        const file = await state.client.readFile(entry.path);
+        title = file.meta.title || entry.name;
+      } catch {
+        /* 读不到标题就用文件名 */
+      }
+      items.push({ slug: slugFromFilename(entry.name), title });
+    }
+    items.sort((a, b) => a.title.localeCompare(b.title, "zh-Hans-CN"));
+
+    if (!items.length) {
+      select.innerHTML = `<option value="">（这个栏目还没有内容）</option>`;
+      $("c-hint").textContent = "先去对应栏目写一篇，再回来审留言。";
+      state.comments = { ...state.comments, path: "", slug: "", sha: "", section, list: [] };
+      renderComments();
+      return;
+    }
+
+    select.innerHTML = items
+      .map((item) => `<option value="${esc(item.slug)}">${esc(item.title)}</option>`)
+      .join("");
+    await loadCommentsFor(section, items[0].slug);
+  } catch (error) {
+    select.innerHTML = `<option value="">读取失败</option>`;
+    toast(error.message, "error");
+  }
+}
+
+async function loadCommentsFor(section, slug) {
+  state.comments.section = section;
+  state.comments.slug = slug;
+  state.comments.path = commentPath(section, slug);
+  state.comments.list = [];
+  state.comments.sha = "";
+  $("c-list").innerHTML = "";
+  $("c-status").textContent = "读取中…";
+
+  try {
+    const file = await state.client.readFile(state.comments.path);
+    const data = JSON.parse(String(file.raw || "").trim() || "{}");
+    const list = Array.isArray(data) ? data : data.comments;
+    state.comments.list = Array.isArray(list) ? list : [];
+    state.comments.sha = file.sha || "";
+    $("c-status").textContent = "";
+  } catch (error) {
+    if (error.status === 404) {
+      $("c-status").textContent = "这个页面还没有留言文件，保存时会新建";
+    } else if (error instanceof SyntaxError) {
+      $("c-status").textContent = "留言文件格式有误，已按空处理（保存会覆盖）";
+      toast("留言文件格式有误，已按空处理。", "error");
+    } else {
+      $("c-status").textContent = "读取失败";
+      toast(error.message, "error");
+      return;
+    }
+  }
+  renderComments();
+}
+
+function renderComments() {
+  const list = $("c-list");
+  list.innerHTML = "";
+  const items = state.comments.list;
+
+  $("c-empty").hidden = items.length > 0;
+  $("c-hint").textContent = items.length ? `这个页面已有 ${items.length} 条留言。` : "";
+
+  items.forEach((comment, index) => {
+    const text = String(comment.text || "");
+    const li = document.createElement("li");
+    li.className = "doc-item";
+    li.innerHTML = `
+      <span class="doc-main">
+        <span class="doc-name">${esc(comment.name || "匿名")}</span>
+        <span class="doc-meta">${esc(comment.date || "")} · ${esc(text.slice(0, 46))}${text.length > 46 ? "…" : ""}</span>
+        ${comment.reply ? `<span class="doc-meta">覆雪回：${esc(String(comment.reply).slice(0, 40))}</span>` : ""}
+      </span>
+      <span class="doc-actions is-static">
+        <button type="button" class="btn btn-danger" data-del="${index}">删除</button>
+      </span>`;
+    li.querySelector("[data-del]").addEventListener("click", () => {
+      state.comments.list.splice(index, 1);
+      renderComments();
+      $("c-status").textContent = "已从列表移除，点「保存并发布」才生效";
+    });
+    list.appendChild(li);
+  });
+}
+
+function addComment() {
+  if (!state.comments.slug) {
+    toast("先选一个页面。", "error");
+    return;
+  }
+  const text = $("c-text").value.trim();
+  if (!text) {
+    toast("留言内容是空的。", "error");
+    $("c-text").focus();
+    return;
+  }
+  const reply = $("c-reply").value.trim();
+  state.comments.list.push({
+    name: $("c-name").value.trim() || "匿名",
+    date: $("c-date").value || todayString(),
+    text,
+    ...(reply ? { reply } : {}),
+  });
+  $("c-name").value = "";
+  $("c-text").value = "";
+  $("c-reply").value = "";
+  renderComments();
+  $("c-status").textContent = "已加入列表，点「保存并发布」生效";
+}
+
+async function saveComments() {
+  if (!state.comments.path) {
+    toast("先选一个页面。", "error");
+    return;
+  }
+  setBusy($("c-save"), true, "保存中…", "保存并发布");
+  $("c-status").textContent = "";
+
+  try {
+    const text = JSON.stringify({ comments: state.comments.list }, null, 2) + "\n";
+    const result = await state.client.writeFile(
+      state.comments.path,
+      text,
+      `更新留言：${COMMENT_SECTIONS[state.comments.section].label} / ${state.comments.slug}`,
+      state.comments.sha || null,
+    );
+    if (result?.content?.sha) state.comments.sha = result.content.sha;
+    $("c-status").textContent = "已提交，约 1 分钟后生效";
+    toast("留言已提交。GitHub 大约 1 分钟后完成构建。", "ok");
+  } catch (error) {
+    toast(error.message, "error");
+    $("c-status").textContent = "保存失败";
+  } finally {
+    setBusy($("c-save"), false, "保存中…", "保存并发布");
+  }
+}
+
 // ---------------- 启动 ----------------
 
 function bindEvents() {
@@ -856,6 +1034,14 @@ function bindEvents() {
   });
 
   $("new-post").addEventListener("click", () => openEditor(null));
+
+  $("c-section").addEventListener("change", loadCommentPages);
+  $("c-page").addEventListener("change", () => {
+    const slug = $("c-page").value;
+    if (slug) loadCommentsFor($("c-section").value, slug);
+  });
+  $("c-add").addEventListener("click", addComment);
+  $("c-save").addEventListener("click", saveComments);
 }
 
 async function boot() {

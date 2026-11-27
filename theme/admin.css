@@ -727,6 +727,31 @@
   margin-top: 4px;
 }
 
+.admin-body select {
+  width: 100%;
+  padding: 10px 13px;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.7;
+  cursor: pointer;
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.admin-body select:focus {
+  outline: none;
+  border-color: var(--seal);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(168, 64, 47, 0.09);
+}
+
+.doc-actions.is-static {
+  opacity: 1;
+}
+
 .pane-divider {
   margin: 42px 0 30px;
   border: 0;

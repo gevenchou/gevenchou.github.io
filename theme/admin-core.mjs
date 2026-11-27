@@ -98,6 +98,13 @@ export function serializeDoc(meta, body) {
   return `${head}${String(body ?? "").trim()}\n`;
 }
 
+/** 从文件名反推出的 slug（与构建时用的是同一套规则） */
+export function slugFromFilename(filename) {
+  return String(filename || "")
+    .replace(/\.md$/i, "")
+    .replace(/^\d{4}-\d{2}-\d{2}[-_]/, "");
+}
+
 /** 英文/数字型 slug；中文标题会得到空串，由调用方兜底 */
 export function slugify(input) {
   return String(input ?? "")
