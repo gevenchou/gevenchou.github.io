@@ -4,17 +4,27 @@
   "tagline": "把日子折成一页，等雪落下",
   "bio": "夜里写字的人。这里存放读书、行走，和一些没说完的话。",
   "seal": "覆雪",
-  "avatar": "assets/avatar.png",
+  "avatar": "assets/avatar.jpg",
   "url": "https://gevenchou.github.io",
   "basePath": "/",
   "nav": [
-    { "key": "posts", "label": "文章", "href": "posts/" },
-    { "key": "works", "label": "作品", "href": "works/" },
-    { "key": "about", "label": "关于", "href": "about/" }
+    {
+      "key": "posts",
+      "label": "文章",
+      "href": "posts/"
+    },
+    {
+      "key": "works",
+      "label": "作品",
+      "href": "works/"
+    },
+    {
+      "key": "about",
+      "label": "关于",
+      "href": "about/"
+    }
   ],
-  "links": [
-    { "label": "GitHub", "url": "https://github.com/gevenchou" }
-  ],
+  "links": [],
   "admin": {
     "enabled": true,
     "owner": "gevenchou",
@@ -22,5 +32,5 @@
     "branch": "main",
     "label": "管理"
   },
-  "footerNote": "由你与我共同维护，慢慢写，慢慢长。"
+  "footerNote": "慢慢写，慢慢长。"
 }
