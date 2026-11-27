@@ -8,29 +8,24 @@
   "url": "https://gevenchou.github.io",
   "basePath": "/",
   "nav": [
-    {
-      "key": "posts",
-      "label": "文章",
-      "href": "posts/"
-    },
-    {
-      "key": "works",
-      "label": "作品",
-      "href": "works/"
-    },
-    {
-      "key": "about",
-      "label": "关于",
-      "href": "about/"
-    }
+    { "key": "posts", "label": "文章", "href": "posts/" },
+    { "key": "works", "label": "作品", "href": "works/" },
+    { "key": "radio", "label": "电台", "href": "radio/" },
+    { "key": "about", "label": "关于", "href": "about/" }
   ],
   "links": [],
+  "podcast": {
+    "title": "覆雪电台",
+    "description": "夜里录的。只读自己写的东西，不加配乐，不剪。",
+    "cover": "assets/avatar.jpg",
+    "author": "七年覆雪"
+  },
+  "footerNote": "慢慢写，慢慢长。",
   "admin": {
     "enabled": true,
     "owner": "gevenchou",
     "repo": "gevenchou.github.io",
     "branch": "main",
     "label": "管理"
-  },
-  "footerNote": "慢慢写，慢慢长。"
+  }
 }

@@ -62,6 +62,8 @@
     <nav class="admin-tabs" id="tabs">
       <button type="button" data-tab="posts" class="is-active">文章</button>
       <button type="button" data-tab="works">作品</button>
+      <button type="button" data-tab="radio">电台</button>
+      <button type="button" data-tab="profile">资料</button>
     </nav>
     <div class="admin-right">
       <span id="who" class="admin-who"></span>
@@ -98,7 +100,7 @@
         <div class="field-row">
           <label class="field field-grow">
             <span class="field-label">标题</span>
-            <input id="f-title" type="text" spellcheck="false" placeholder="今天想写点什么">
+            <input id="f-title" type="text" spellcheck="false" placeholder="这一期想聊点什么">
           </label>
           <label class="field">
             <span class="field-label">日期</span>
@@ -139,6 +141,27 @@
           <input id="f-cover" type="text" spellcheck="false" placeholder="assets/cover.jpg">
         </label>
 
+        <!-- 电台专属 -->
+        <div class="radio-only" hidden>
+          <label class="field">
+            <span class="field-label">音频（仓库文件路径，或直接粘外链）</span>
+            <span class="media-row">
+              <input id="f-audio" type="text" spellcheck="false" placeholder="assets/audio/xxx.mp3 或 https://…">
+              <button type="button" id="pick-audio" class="btn">选择文件</button>
+              <input id="audio-file" type="file" accept="audio/*" hidden>
+            </span>
+          </label>
+          <p id="audio-info" class="upload-hint muted">
+            建议单集 ≤ 15MB（约 15 分钟 128kbps）。更大的音频请用外链，GitHub 仓库不适合放大文件。
+          </p>
+          <div id="audio-preview" class="audio-preview"></div>
+
+          <label class="field field-narrow">
+            <span class="field-label">时长（可选，会显示在列表里）</span>
+            <input id="f-duration" type="text" spellcheck="false" placeholder="12:34">
+          </label>
+        </div>
+
         <label class="check">
           <input id="f-draft" type="checkbox">
           <span>存为草稿（不会出现在网站上）</span>
@@ -147,7 +170,7 @@
         <div class="editor-grid">
           <div class="editor-col">
             <div class="editor-head">
-              <span class="field-label">正文（Markdown）</span>
+              <span class="field-label">正文 / 节目简介（Markdown）</span>
               <span class="muted" id="body-stat"></span>
             </div>
             <textarea id="f-body" spellcheck="false" placeholder="正文从这里开始。空一行就是新段落。
@@ -169,6 +192,89 @@
           <button type="submit" id="save" class="btn btn-primary">保存并发布</button>
           <button type="button" id="delete" class="btn btn-danger" hidden>删除这篇</button>
           <span id="edit-status" class="muted"></span>
+        </div>
+      </form>
+    </section>
+
+    <!-- 个人资料 -->
+    <section id="profile-pane" hidden>
+      <div class="pane-head">
+        <h2>个人资料</h2>
+        <div class="pane-actions">
+          <span class="muted">保存后约 1 分钟生效</span>
+        </div>
+      </div>
+
+      <form id="profile-form" class="edit-form">
+        <div class="media-fields">
+          <div class="media-field">
+            <span class="field-label">头像</span>
+            <div class="media-preview">
+              <img id="avatar-img" alt="当前头像" decoding="async">
+            </div>
+            <div class="media-actions">
+              <button type="button" id="pick-avatar" class="btn">更换头像</button>
+              <input id="avatar-file" type="file" accept="image/*" hidden>
+            </div>
+          </div>
+
+          <div class="media-field">
+            <span class="field-label">背景图</span>
+            <div class="media-preview media-preview-wide" id="bg-preview"></div>
+            <div class="media-actions">
+              <button type="button" id="pick-bg" class="btn">更换背景</button>
+              <button type="button" id="clear-bg" class="btn btn-ghost">移除</button>
+              <input id="bg-file" type="file" accept="image/*" hidden>
+            </div>
+            <label class="field field-narrow">
+              <span class="field-label">背景强度 <span id="bg-strength-value" class="muted"></span></span>
+              <input id="bg-strength" type="range" min="0" max="100" step="5" value="25">
+            </label>
+            <p class="upload-hint muted">背景图会压在宣纸色下面。强度建议 30%–60%，太高会让字发虚。挑素净、不抢字的图效果最好。</p>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <label class="field field-grow">
+            <span class="field-label">站名（浏览器标签、左上角）</span>
+            <input id="p-siteTitle" type="text" spellcheck="false">
+          </label>
+          <label class="field field-narrow">
+            <span class="field-label">印章文字（1–2 字）</span>
+            <input id="p-seal" type="text" maxlength="4" spellcheck="false">
+          </label>
+        </div>
+
+        <div class="field-row">
+          <label class="field field-grow">
+            <span class="field-label">署名</span>
+            <input id="p-author" type="text" spellcheck="false">
+          </label>
+          <label class="field field-grow">
+            <span class="field-label">一句话标语</span>
+            <input id="p-tagline" type="text" spellcheck="false">
+          </label>
+        </div>
+
+        <label class="field">
+          <span class="field-label">简介</span>
+          <textarea id="p-bio" rows="3" spellcheck="false"></textarea>
+        </label>
+
+        <label class="field">
+          <span class="field-label">页脚寄语</span>
+          <input id="p-footerNote" type="text" spellcheck="false">
+        </label>
+
+        <label class="field">
+          <span class="field-label">首页链接（每行一个，格式：文字|网址）</span>
+          <textarea id="p-links" rows="3" spellcheck="false" placeholder="GitHub|https://github.com/gevenchou
+邮箱|mailto:you@example.com"></textarea>
+        </label>
+
+        <div class="edit-actions">
+          <button type="submit" id="save-profile" class="btn btn-primary">保存资料</button>
+          <span id="profile-status" class="muted"></span>
         </div>
       </form>
     </section>

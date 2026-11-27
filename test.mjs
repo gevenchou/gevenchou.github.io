@@ -189,6 +189,48 @@ check("后台解析与构建解析对普通文章一致", () => {
   assert.equal(a.body, b.body);
 });
 
+check("音频/图片字段能往返", () => {
+  const meta = {
+    title: "第〇期 · 试音",
+    date: "2026-11-27",
+    audio: "assets/audio/2026-11-27-ep01.mp3",
+    duration: "12:34",
+  };
+  const text = admin.serializeDoc(meta, "节目简介");
+  const { data } = parseFrontMatter(text);
+  assert.equal(data.audio, "assets/audio/2026-11-27-ep01.mp3");
+  assert.equal(data.duration, "12:34");
+});
+
+check("外链音频原样保留", () => {
+  const text = admin.serializeDoc({ title: "外链", date: "2026-11-27", audio: "https://example.com/a.mp3" }, "");
+  const { data } = parseFrontMatter(text);
+  assert.equal(data.audio, "https://example.com/a.mp3");
+});
+
+check("二进制转 base64", () => {
+  const bytes = new Uint8Array([0x49, 0x44, 0x33, 0x04, 0x00]);
+  assert.equal(admin.bytesToBase64(bytes), "SUQzBAA=");
+});
+
+check("文件大小格式化", () => {
+  assert.equal(admin.formatBytes(512), "512 B");
+  assert.equal(admin.formatBytes(2048), "2.0 KB");
+  assert.equal(admin.formatBytes(3 * 1024 * 1024), "3.0 MB");
+});
+
+check("媒体文件路径按日期和 slug 生成", () => {
+  assert.equal(
+    admin.buildMediaPath("assets/audio", "2026-11-27", "ep01", "my-recording.MP3"),
+    "assets/audio/2026-11-27-ep01.mp3",
+  );
+});
+
+check("纯中文 slug 会兜底成随机名，不会生成畸形路径", () => {
+  const path = admin.buildMediaPath("assets/audio", "2026-11-27", "纯中文名", "x.wav");
+  assert.match(path, /^assets\/audio\/2026-11-27-media-[a-z0-9]+\.wav$/);
+});
+
 console.log("");
 if (failed) {
   console.error(`✗ ${failed} 项失败，${passed} 项通过\n`);

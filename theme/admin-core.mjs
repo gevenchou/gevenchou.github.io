@@ -59,7 +59,7 @@ export function parseDoc(raw) {
   return { meta, body: (match[2] ?? "").trim() };
 }
 
-const FIELD_ORDER = ["title", "date", "tags", "summary", "status", "cover", "link", "draft"];
+const FIELD_ORDER = ["title", "date", "audio", "duration", "tags", "summary", "status", "cover", "link", "draft"];
 
 function needsQuote(value) {
   return (
@@ -205,5 +205,75 @@ export function createClient({ owner, repo, branch = "main", token }) {
         body: JSON.stringify({ message, sha, branch }),
       });
     },
+
+    /** 读取 site.config.json */
+    async readConfig() {
+      const file = await request(`${contentPath("site.config.json")}?ref=${ref}`);
+      const text = base64ToUtf8(file.content ?? "");
+      return { sha: file.sha, data: JSON.parse(text) };
+    },
+
+    /** 写回 site.config.json，保持两空格缩进 */
+    writeConfig(data, message, sha) {
+      const text = JSON.stringify(data, null, 2) + "\n";
+      return request(contentPath("site.config.json"), {
+        method: "PUT",
+        body: JSON.stringify({ message, content: utf8ToBase64(text), branch, ...(sha ? { sha } : {}) }),
+      });
+    },
+
+    /** 取某个文件的 sha，不存在返回 null（用于覆盖上传） */
+    async getSha(path) {
+      try {
+        const file = await request(`${contentPath(path)}?ref=${ref}`);
+        return file.sha || null;
+      } catch (error) {
+        if (error.status === 404) return null;
+        throw error;
+      }
+    },
+
+    /** 上传二进制文件（音频、图片） */
+    writeBinaryFile(path, bytes, message, sha) {
+      return request(contentPath(path), {
+        method: "PUT",
+        body: JSON.stringify({
+          message,
+          content: bytesToBase64(bytes),
+          branch,
+          ...(sha ? { sha } : {}),
+        }),
+      });
+    },
   };
+}
+
+/** 二进制 → base64（分块处理，避免参数过多爆栈） */
+export function bytesToBase64(bytes) {
+  let binary = "";
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+}
+
+export function formatBytes(bytes) {
+  const n = Number(bytes) || 0;
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / 1024 / 1024).toFixed(1)} MB`;
+}
+
+export function extOf(filename) {
+  const match = String(filename || "").match(/\.([a-z0-9]+)$/i);
+  return match ? match[1].toLowerCase() : "";
+}
+
+/** 生成媒体文件在仓库里的路径：assets/audio/2026-11-27-my-episode.mp3 */
+export function buildMediaPath(folder, date, slug, filename) {
+  const safeDate = /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : todayString();
+  const safeSlug = slugify(slug) || `media-${Date.now().toString(36)}`;
+  const ext = extOf(filename) || "bin";
+  return `${folder}/${safeDate}-${safeSlug}.${ext}`;
 }

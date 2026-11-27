@@ -102,10 +102,23 @@ function main() {
   // ---- 内容 ----
   const posts = sortByDateDesc(loadCollection(path.join(CONTENT, "posts")));
   const works = sortByDateDesc(loadCollection(path.join(CONTENT, "works")));
+  const radio = sortByDateDesc(loadCollection(path.join(CONTENT, "radio")));
+
+  // 仓库内的音频要算出真实字节数，播客订阅源的 enclosure 需要它
+  for (const episode of radio) {
+    episode.audioSize = 0;
+    const file = String(episode.audio || "").trim();
+    if (file && !/^(https?:)?\/\//i.test(file)) {
+      const abs = path.join(ROOT, file.replace(/^\/+/, ""));
+      if (fs.existsSync(abs)) episode.audioSize = fs.statSync(abs).size;
+      else warn(`radio/${episode.filename}：找不到音频文件 ${file}`);
+    }
+  }
 
   for (const [kind, items] of [
     ["posts", posts],
     ["works", works],
+    ["radio", radio],
   ]) {
     const seen = new Map();
     for (const item of items) {
@@ -123,7 +136,7 @@ function main() {
       title: "",
       description: site.bio,
       active: "home",
-      main: T.homeMain(site, base, posts, works),
+      main: T.homeMain(site, base, posts, works, radio),
       canonical: T.absoluteUrl(site, base, ""),
     }),
   );
@@ -191,6 +204,43 @@ function main() {
     );
   });
 
+  // ---- 电台 ----
+  writeFile(
+    "radio/index.html",
+    T.layout(site, base, {
+      title: "电台",
+      description: site.podcast?.description || `${site.siteTitle} 的电台`,
+      active: "radio",
+      main: `${T.pageHead(site.podcast?.title || "电台", "点开就能听。没有配乐，不剪。")}${T.radioListHtml(
+        radio,
+        base,
+        site,
+      )}${
+        radio.length
+          ? `<p class="feed-hint">想订阅？把这个地址加进播客 App：<a href="${T.joinUrl(base, "radio/feed.xml")}">radio/feed.xml</a></p>`
+          : ""
+      }`,
+      canonical: T.absoluteUrl(site, base, "radio/"),
+    }),
+  );
+
+  radio.forEach((episode) => {
+    writeFile(
+      `radio/${episode.slug}/index.html`,
+      T.layout(site, base, {
+        title: episode.title,
+        description: episode.summary,
+        active: "radio",
+        main: T.radioPageMain(site, base, { ...episode, html: resolveAssetUrls(episode.html, base) }),
+        pageClass: "page-article",
+        ogType: "article",
+        canonical: T.absoluteUrl(site, base, `radio/${episode.slug}/`),
+      }),
+    );
+  });
+
+  writeFile("radio/feed.xml", T.podcastFeedXml(site, base, radio));
+
   // ---- 关于 ----
   const aboutFile = path.join(CONTENT, "about.md");
   if (fs.existsSync(aboutFile)) {
@@ -243,12 +293,13 @@ function main() {
   if (fs.existsSync(path.join(ROOT, "CNAME"))) fs.copyFileSync(path.join(ROOT, "CNAME"), path.join(DIST, "CNAME"));
 
   // ---- 报告 ----
-  const pages = posts.length + works.length + 5;
+  const pages = posts.length + works.length + radio.length + 6;
   console.log("");
   console.log(`  站点      ${site.siteTitle} / ${site.author}`);
   console.log(`  地址前缀  ${base}`);
   console.log(`  文章      ${posts.length} 篇`);
   console.log(`  作品      ${works.length} 个`);
+  console.log(`  电台      ${radio.length} 期`);
   console.log(`  生成页面  ${pages} 个 → dist/`);
   if (warnings.length) {
     console.log("");
