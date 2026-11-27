@@ -83,16 +83,16 @@ function writeAdminPage(site, base) {
   writeFile("admin/index.html", html);
 }
 
-/** 读取某个作品的留言（只收录审核通过的，文件不存在就当没有） */
-function loadComments(slug) {
-  const file = path.join(CONTENT, "comments", `${slug}.json`);
+/** 读取某个页面的留言（只收录审核通过的，文件不存在就当没有） */
+function loadComments(section, slug) {
+  const file = path.join(CONTENT, "comments", section, `${slug}.json`);
   if (!fs.existsSync(file)) return [];
   try {
     const data = readJson(file);
     const list = Array.isArray(data) ? data : data.comments;
     return Array.isArray(list) ? list.filter((c) => c && String(c.text || "").trim()) : [];
   } catch (error) {
-    warn(`content/comments/${slug}.json 解析失败：${error.message}`);
+    warn(`content/comments/${section}/${slug}.json 解析失败：${error.message}`);
     return [];
   }
 }
@@ -170,6 +170,13 @@ async function main() {
     }
   }
 
+  let commentTotal = 0;
+  const takeComments = (section, slug) => {
+    const list = loadComments(section, slug);
+    commentTotal += list.length;
+    return list;
+  };
+
   // ---- 首页 ----
   writeFile(
     "index.html",
@@ -199,7 +206,14 @@ async function main() {
   posts.forEach((post, index) => {
     const newer = posts[index - 1] ?? null;
     const older = posts[index + 1] ?? null;
-    const main = T.postPageMain(site, base, { ...post, html: resolveAssetUrls(post.html, base) }, older, newer);
+    const main = T.postPageMain(
+      site,
+      base,
+      { ...post, html: resolveAssetUrls(post.html, base) },
+      older,
+      newer,
+      takeComments("posts", post.slug),
+    );
     writeFile(
       `posts/${post.slug}/index.html`,
       T.layout(site, base, {
@@ -238,7 +252,7 @@ async function main() {
         title: work.title,
         description: work.summary,
         active: "works",
-        main: T.workPageMain(site, base, work, loadComments(work.slug)),
+        main: T.workPageMain(site, base, work, takeComments("works", work.slug)),
         pageClass: "page-article",
         ogType: "article",
         canonical: T.absoluteUrl(site, base, `works/${work.slug}/`),
@@ -273,7 +287,7 @@ async function main() {
         title: episode.title,
         description: episode.summary,
         active: "radio",
-        main: T.radioPageMain(site, base, { ...episode, html: resolveAssetUrls(episode.html, base) }),
+        main: T.radioPageMain(site, base, { ...episode, html: resolveAssetUrls(episode.html, base) }, takeComments("radio", episode.slug)),
         pageClass: "page-article",
         ogType: "article",
         canonical: T.absoluteUrl(site, base, `radio/${episode.slug}/`),
@@ -342,6 +356,7 @@ async function main() {
   console.log(`  文章      ${posts.length} 篇`);
   console.log(`  作品      ${works.length} 个`);
   console.log(`  电台      ${radio.length} 期`);
+  console.log(`  留言      ${commentTotal} 条`);
   console.log(`  生成页面  ${pages} 个 → dist/`);
   if (warnings.length) {
     console.log("");
