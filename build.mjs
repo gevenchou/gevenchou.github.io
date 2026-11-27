@@ -83,7 +83,7 @@ function writeAdminPage(site, base) {
   writeFile("admin/index.html", html);
 }
 
-function main() {
+async function main() {
   const configFile = path.join(ROOT, "site.config.json");
   if (!fs.existsSync(configFile)) {
     console.error("找不到 site.config.json");
@@ -108,11 +108,28 @@ function main() {
   for (const episode of radio) {
     episode.audioSize = 0;
     const file = String(episode.audio || "").trim();
-    if (file && !/^(https?:)?\/\//i.test(file)) {
-      const abs = path.join(ROOT, file.replace(/^\/+/, ""));
-      if (fs.existsSync(abs)) episode.audioSize = fs.statSync(abs).size;
-      else warn(`radio/${episode.filename}：找不到音频文件 ${file}`);
-    }
+    if (!file) continue;
+    if (/^(https?:)?\/\//i.test(file)) continue; // 外链稍后异步取
+    const abs = path.join(ROOT, file.replace(/^\/+/, ""));
+    if (fs.existsSync(abs)) episode.audioSize = fs.statSync(abs).size;
+    else warn(`radio/${episode.filename}：找不到音频文件 ${file}`);
+  }
+
+  // 外链音频（R2、喜马拉雅等）用 HEAD 取真实字节数；拿不到就留 0，不阻塞构建
+  const external = radio.filter((e) => /^https?:\/\//i.test(String(e.audio || "").trim()));
+  if (external.length) {
+    await Promise.all(
+      external.map(async (episode) => {
+        const url = String(episode.audio).trim();
+        try {
+          const res = await fetch(url, { method: "HEAD", signal: AbortSignal.timeout(6000) });
+          const size = Number(res.headers.get("content-length") || 0);
+          if (res.ok && size > 0) episode.audioSize = size;
+        } catch {
+          warn(`radio/${episode.filename}：取不到外链音频大小，播客源里 length 会写成 0`);
+        }
+      }),
+    );
   }
 
   for (const [kind, items] of [
@@ -309,4 +326,7 @@ function main() {
   console.log("");
 }
 
-main();
+main().catch((error) => {
+  console.error("\n构建失败：" + (error && error.message ? error.message : error));
+  process.exit(1);
+});

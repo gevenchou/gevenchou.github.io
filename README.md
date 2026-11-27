@@ -264,7 +264,56 @@ Apple Podcasts 之类的播客 App 订阅（只收录已上传音频的节目）
 
 ---
 
-## 九、自检
+## 九、把音频放到 Cloudflare R2（推荐）
+
+GitHub 仓库不适合当音频主机：站点总量 1GB、带宽 100GB/月，一期节目的 10MB × 1000 次播放就能吃掉 10GB。
+R2 的免费额度专门适合这件事：
+
+| 项目 | 免费额度 |
+| --- | --- |
+| 存储 | 10 GB（约 700 期 15MB 的节目） |
+| **出网流量** | **免费，不计量**（播客最怕的就是这个） |
+| 写操作 | 100 万次/月 |
+| 读操作 | 1000 万次/月 |
+
+### 一次性配置（约 5 分钟）
+
+1. 注册 <https://dash.cloudflare.com/sign-up>（不需要买域名，也不需要绑卡）
+2. 左侧 **R2 object storage** → **Create bucket**，名字填 `fuxue-audio`
+3. 进这个桶 → **Settings** → **Public Development URL** → **Enable** → 输入 `allow` 确认
+   页面上会给你一个 `https://pub-xxxxxxxx.r2.dev` 的地址，记下来
+4. 回到 R2 总览 → **Manage R2 API Tokens** → **Create API token**
+   - Permissions 选 **Object Read & Write**
+   - 可选：Specify bucket 只勾 `fuxue-audio`（更安全）
+   - 创建后记下 **Access Key ID** 和 **Secret Access Key**（Secret 只显示一次）
+5. R2 总览右上角能复制 **Account ID**
+6. 复制 `tools/r2.config.example.json` 为 `tools/r2.config.json`，把这四项填进去
+
+### 检查有没有配好
+
+```powershell
+node tools/r2-upload.mjs --selftest   # 签名算法自检，不需要凭据
+node tools/r2-upload.mjs --check      # 用真实凭据检查桶能不能访问
+```
+
+### 上传一期节目
+
+```powershell
+node tools/r2-upload.mjs 第一期.mp3
+```
+
+它会打印一个公开网址，复制到后台「电台」的**「音频」**那一栏，保存就生效。
+也可以一次传多个文件，或者用 `--key eps/ep01.mp3` 自定义存放路径。
+
+### 两个提醒
+
+- **`r2.dev` 地址是「开发用」的**，有速率限制。如果电台真的有人常听，建议绑一个自己的子域名
+  （比如 `audio.你的域名.com`）到这个桶，然后把 `publicBase` 改成那个域名
+- `tools/r2.config.json` 里是密钥，已经写进 `.gitignore`，不会进仓库，但**别外传**
+
+---
+
+## 十、自检
 
 改过渲染逻辑（`lib/` 里的文件）之后，跑一下：
 

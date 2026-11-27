@@ -1,0 +1,8 @@
+{
+  "accountId": "在这里填你的 Cloudflare 账户 ID",
+  "bucket": "fuxue-audio",
+  "accessKeyId": "在这里填 R2 API 令牌的 Access Key ID",
+  "secretAccessKey": "在这里填 R2 API 令牌的 Secret Access Key",
+  "publicBase": "https://pub-xxxxxxxxxxxxxxxx.r2.dev",
+  "prefix": "radio"
+}

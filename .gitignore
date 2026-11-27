@@ -6,6 +6,9 @@ dist/
 .shots/
 node_modules/
 
+# R2 密钥：绝对不能进仓库
+tools/r2.config.json
+
 # 系统垃圾
 Thumbs.db
 .DS_Store
