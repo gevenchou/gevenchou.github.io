@@ -83,6 +83,20 @@ function writeAdminPage(site, base) {
   writeFile("admin/index.html", html);
 }
 
+/** 读取某个作品的留言（只收录审核通过的，文件不存在就当没有） */
+function loadComments(slug) {
+  const file = path.join(CONTENT, "comments", `${slug}.json`);
+  if (!fs.existsSync(file)) return [];
+  try {
+    const data = readJson(file);
+    const list = Array.isArray(data) ? data : data.comments;
+    return Array.isArray(list) ? list.filter((c) => c && String(c.text || "").trim()) : [];
+  } catch (error) {
+    warn(`content/comments/${slug}.json 解析失败：${error.message}`);
+    return [];
+  }
+}
+
 async function main() {
   const configFile = path.join(ROOT, "site.config.json");
   if (!fs.existsSync(configFile)) {
@@ -143,6 +157,16 @@ async function main() {
       if (seen.has(item.slug)) warn(`${kind}/${item.filename}：slug「${item.slug}」与 ${seen.get(item.slug)} 重复`);
       seen.set(item.slug, item.filename);
       if (!item.html.trim()) warn(`${kind}/${item.filename}：正文为空`);
+    }
+  }
+
+  // ---- 留言设置（可选）：合并到 site.comments ----
+  const commentCfg = path.join(CONTENT, "comments", "settings.json");
+  if (fs.existsSync(commentCfg)) {
+    try {
+      site.comments = { ...(site.comments || {}), ...readJson(commentCfg) };
+    } catch (error) {
+      warn(`content/comments/settings.json 解析失败：${error.message}`);
     }
   }
 
@@ -214,7 +238,7 @@ async function main() {
         title: work.title,
         description: work.summary,
         active: "works",
-        main: T.workPageMain(site, base, work),
+        main: T.workPageMain(site, base, work, loadComments(work.slug)),
         pageClass: "page-article",
         ogType: "article",
         canonical: T.absoluteUrl(site, base, `works/${work.slug}/`),

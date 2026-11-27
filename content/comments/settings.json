@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "endpoint": "",
+  "email": "",
+  "notice": "留言会先经过审核，通过后才显示。",
+  "namePlaceholder": "留下你喜欢的名字",
+  "placeholder": "说点什么吧",
+  "submitLabel": "送出留言"
+}
