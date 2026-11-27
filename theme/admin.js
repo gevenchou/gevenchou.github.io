@@ -57,6 +57,7 @@ const state = {
   editing: null,
   saving: false,
   profile: { sha: "", data: null, loaded: false },
+  about: { sha: "", path: "content/about.md", meta: {}, body: "", loaded: false },
   uploading: false,
 };
 
@@ -551,6 +552,8 @@ function fillProfile(data) {
 }
 
 async function loadProfile() {
+  loadAbout();
+
   if (state.profile.loaded) {
     fillProfile(state.profile.data);
     return;
@@ -692,6 +695,88 @@ async function saveProfile(event) {
   }
 }
 
+// ---------------- 关于页 ----------------
+
+function fillAbout(meta, body) {
+  $("a-title").value = meta.title || "关于";
+  $("a-subtitle").value = meta.subtitle || "";
+  $("a-summary").value = meta.summary || "";
+  $("a-body").value = body || "";
+  updateAboutPreview();
+  updateAboutStat();
+}
+
+async function loadAbout() {
+  if (state.about.loaded) {
+    fillAbout(state.about.meta, state.about.body);
+    return;
+  }
+  try {
+    const file = await state.client.readFile(state.about.path);
+    state.about = { ...state.about, sha: file.sha, meta: file.meta, body: file.body, loaded: true };
+    fillAbout(file.meta, file.body);
+    $("about-status").textContent = "";
+  } catch (error) {
+    if (error.status === 404) {
+      state.about = { ...state.about, sha: "", meta: {}, body: "", loaded: true };
+      fillAbout({}, "");
+      $("about-status").textContent = "还没有关于页，保存后会新建";
+      return;
+    }
+    $("about-status").textContent = "读取失败";
+    toast(error.message, "error");
+  }
+}
+
+let aboutPreviewTimer = null;
+function updateAboutPreview() {
+  clearTimeout(aboutPreviewTimer);
+  aboutPreviewTimer = setTimeout(() => {
+    const text = $("a-body").value.trim();
+    $("a-preview").innerHTML = text ? renderMarkdown(text) : '<p class="muted">这里会显示排版效果。</p>';
+  }, 150);
+}
+
+function updateAboutStat() {
+  const chars = (($("a-body").value.match(/[\u3400-\u9fff]/g) || []).length);
+  $("a-stat").textContent = chars ? `${chars} 字` : "";
+}
+
+async function saveAbout(event) {
+  event.preventDefault();
+
+  const meta = { ...(state.about.meta || {}) };
+  meta.title = $("a-title").value.trim() || "关于";
+  meta.subtitle = $("a-subtitle").value.trim();
+  meta.summary = $("a-summary").value.trim();
+  for (const key of Object.keys(meta)) {
+    if (meta[key] === "" || meta[key] === undefined) delete meta[key];
+  }
+
+  const text = serializeDoc(meta, $("a-body").value);
+  setBusy($("save-about"), true, "提交中…", "保存关于页");
+  $("about-status").textContent = "";
+
+  try {
+    const result = await state.client.writeFile(
+      state.about.path,
+      text,
+      "更新关于页",
+      state.about.sha || null,
+    );
+    if (result?.content?.sha) state.about.sha = result.content.sha;
+    state.about.meta = meta;
+    state.about.body = $("a-body").value;
+    $("about-status").textContent = "已提交，约 1 分钟后生效";
+    toast("关于页已提交。GitHub 大约 1 分钟后完成构建。", "ok");
+  } catch (error) {
+    toast(error.message, "error");
+    $("about-status").textContent = "保存失败";
+  } finally {
+    setBusy($("save-about"), false, "提交中…", "保存关于页");
+  }
+}
+
 function clearBackground() {
   if (!state.profile.loaded) return;
   const data = state.profile.data;
@@ -727,6 +812,11 @@ function bindEvents() {
   $("cancel").addEventListener("click", closeEditor);
   $("edit-form").addEventListener("submit", saveDoc);
   $("profile-form").addEventListener("submit", saveProfile);
+  $("about-form").addEventListener("submit", saveAbout);
+  $("a-body").addEventListener("input", () => {
+    updateAboutPreview();
+    updateAboutStat();
+  });
 
   $("f-body").addEventListener("input", () => {
     updatePreview();

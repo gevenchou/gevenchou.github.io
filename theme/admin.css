@@ -727,6 +727,22 @@
   margin-top: 4px;
 }
 
+.pane-divider {
+  margin: 42px 0 30px;
+  border: 0;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.pane-head-plain {
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin-bottom: 16px;
+}
+
+#a-body {
+  min-height: 340px;
+}
+
 /* ---------------- 响应式 ---------------- */
 
 @media (max-width: 860px) {

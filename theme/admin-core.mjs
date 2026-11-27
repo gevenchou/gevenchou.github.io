@@ -59,7 +59,7 @@ export function parseDoc(raw) {
   return { meta, body: (match[2] ?? "").trim() };
 }
 
-const FIELD_ORDER = ["title", "date", "audio", "duration", "tags", "summary", "status", "cover", "link", "draft"];
+const FIELD_ORDER = ["title", "subtitle", "date", "audio", "duration", "tags", "summary", "status", "cover", "link", "draft"];
 
 function needsQuote(value) {
   return (

@@ -1,7 +1,7 @@
 {
   "enabled": true,
-  "endpoint": "",
-  "email": "",
+  "endpoint": "https://formsubmit.co/gevenchou@outlook.com",
+  "email": "gevenchou@outlook.com",
   "notice": "留言会先经过审核，通过后才显示。",
   "namePlaceholder": "留下你喜欢的名字",
   "placeholder": "说点什么吧",

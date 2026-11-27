@@ -277,6 +277,58 @@
           <span id="profile-status" class="muted"></span>
         </div>
       </form>
+
+      <!-- 关于页 -->
+      <div class="pane-divider"></div>
+
+      <div class="pane-head pane-head-plain">
+        <h2>关于页</h2>
+        <div class="pane-actions">
+          <span class="muted">「关于」页面的全部内容，支持 Markdown</span>
+        </div>
+      </div>
+
+      <form id="about-form" class="edit-form">
+        <div class="field-row">
+          <label class="field field-grow">
+            <span class="field-label">标题</span>
+            <input id="a-title" type="text" spellcheck="false" placeholder="关于">
+          </label>
+          <label class="field field-grow">
+            <span class="field-label">副标题（标题下面那行小字）</span>
+            <input id="a-subtitle" type="text" spellcheck="false" placeholder="一个写字的人…">
+          </label>
+        </div>
+
+        <label class="field">
+          <span class="field-label">摘要（搜索结果和 SEO 用）</span>
+          <input id="a-summary" type="text" spellcheck="false">
+        </label>
+
+        <div class="editor-grid">
+          <div class="editor-col">
+            <div class="editor-head">
+              <span class="field-label">正文（Markdown）</span>
+              <span class="muted" id="a-stat"></span>
+            </div>
+            <textarea id="a-body" spellcheck="false" placeholder="## 我是谁
+
+在这里写你想让人知道的部分。"></textarea>
+          </div>
+          <div class="editor-col">
+            <div class="editor-head">
+              <span class="field-label">预览</span>
+              <span class="muted">与线上排版一致</span>
+            </div>
+            <div id="a-preview" class="preview prose"></div>
+          </div>
+        </div>
+
+        <div class="edit-actions">
+          <button type="submit" id="save-about" class="btn btn-primary">保存关于页</button>
+          <span id="about-status" class="muted"></span>
+        </div>
+      </form>
     </section>
   </main>
 </section>
